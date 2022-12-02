@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31410.357
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MdbToGdb", "MdbToGdb\MdbToGdb.csproj", "{0D6F15B0-A730-4789-BD9E-44EE5504442E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0D6F15B0-A730-4789-BD9E-44EE5504442E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D6F15B0-A730-4789-BD9E-44EE5504442E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D6F15B0-A730-4789-BD9E-44EE5504442E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D6F15B0-A730-4789-BD9E-44EE5504442E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5FFB0F0E-1597-4AC8-9F3A-1D7FA32B3887}
+	EndGlobalSection
+EndGlobal

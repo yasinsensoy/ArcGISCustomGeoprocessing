@@ -7,8 +7,7 @@ namespace MdbToGdb
 {
     public class ConvertMdbToGDBWorkspace : IGPFunction2
     {
-        private readonly string m_ToolName = "ConvertMdbToGDBWorkspace";
-        private readonly string m_metadatafile = "ConvertMdbToGDBWorkspace.xml";
+        private readonly string m_metadatafile = "ORBIS Workspace.xml";
         private readonly IGPUtilities m_GPUtilities;
         private IArray m_Parameters;
 
@@ -21,10 +20,10 @@ namespace MdbToGdb
         // Set the name of the function tool. 
         // This name appears when executing the tool at the command line or in scripting. 
         // This name should be unique to each toolbox and must not contain spaces.
-        public string Name => m_ToolName;
+        public string Name => "ORBIS Workspace";
 
         // Set the function tool Display Name as seen in ArcToolbox.
-        public string DisplayName => "Convert MDB to GDB Workspace";
+        public string DisplayName => "MDB to GDB";
 
         // This is the location where the parameters to the Function Tool are defined. 
         // This property returns an IArray of parameter objects (IGPParameter). 
@@ -123,7 +122,7 @@ namespace MdbToGdb
             {
                 // Add CalculateArea.FullName getter implementation
                 IGPFunctionFactory functionFactory = new ConvertMdbToGDBWorkspaceFactory();
-                return (IName)functionFactory.GetFunctionName(m_ToolName);
+                return (IName)functionFactory.GetFunctionName(Name);
             }
         }
 

@@ -29,11 +29,11 @@ namespace MdbToGdb
             {
                 case (0):
                     name = (IGPName)functionName;
-                    name.Category = "ORBIS";
+                    // name.Category = "Convert";
                     name.Description = "MDB içerisindeki FeatureClass ve Table objectClasslarını GDB içerisine aktarır.";
-                    name.DisplayName = "Convert MDB to GDB Workspace";
-                    name.Name = "ConvertMdbToGDBWorkspace";
-                    name.Factory = (IGPFunctionFactory)this;
+                    name.DisplayName = "MDB to GDB";
+                    name.Name = "ORBIS Workspace";
+                    name.Factory = this;
                     break;
             }
             return functionName;
@@ -44,7 +44,7 @@ namespace MdbToGdb
 
         // This is the name of the function factory. 
         // This is used when generating the Toolbox containing the function tools of the factory.
-        public string Name => "ConvertMdbToGDBWorkspace";
+        public string Name => "ORBIS Workspace";
 
         // This is the alias name of the factory.
         public string Alias => "Convert MDB to GDB Workspace";
@@ -63,7 +63,7 @@ namespace MdbToGdb
         // This method will create and return a function object based upon the input name.
         public IGPFunction GetFunction(string Name)
         {
-            if (Name == "ConvertMdbToGDBWorkspace")
+            if (Name == "ORBIS Workspace")
                 return new ConvertMdbToGDBWorkspace();
             return null;
         }
@@ -71,7 +71,7 @@ namespace MdbToGdb
         // This method will create and return a function name object based upon the input name.
         public IGPName GetFunctionName(string Name)
         {
-            if (Name == "ConvertMdbToGDBWorkspace")
+            if (Name == "ORBIS Workspace")
                 return (IGPName)CreateGPFunctionNames(0);
             return null;
         }

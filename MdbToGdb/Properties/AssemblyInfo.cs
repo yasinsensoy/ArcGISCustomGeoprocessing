@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("MdbToGdb")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("MDB içerisindeki FeatureClass ve Table objectClasslarını GDB içerisine aktarır.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Konumsal Bilgi Sistemleri")]
 [assembly: AssemblyProduct("MdbToGdb")]
-[assembly: AssemblyCopyright("Copyright ©  2022")]
+[assembly: AssemblyCopyright("Copyright © 2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

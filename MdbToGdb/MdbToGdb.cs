@@ -4,7 +4,9 @@ using ESRI.ArcGIS.Geodatabase;
 using ESRI.ArcGIS.Geoprocessing;
 using System;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace MdbToGdb
 {
@@ -13,50 +15,40 @@ namespace MdbToGdb
         public string Convert(string mdbPath, IGPMessages message)
         {
             string gdbPath = "";
+            CreateFileGDB createFileGDBTool = null;
+            ESRI.ArcGIS.Geoprocessor.Geoprocessor gp = null;
+            IGpEnumList list = null;
             try
             {
                 RuntimeManager.Bind(ProductCode.EngineOrDesktop);
                 string gdbName = Path.GetFileNameWithoutExtension(mdbPath) + ".gdb";
                 string dirName = Path.GetDirectoryName(mdbPath);
-                CreateFileGDB createFileGDBTool = new CreateFileGDB(dirName, gdbName);
-                ESRI.ArcGIS.Geoprocessor.Geoprocessor gp = new ESRI.ArcGIS.Geoprocessor.Geoprocessor();
+                createFileGDBTool = new CreateFileGDB(dirName, gdbName);
+                gp = new ESRI.ArcGIS.Geoprocessor.Geoprocessor();
                 gp.OverwriteOutput = true;
                 gp.SetEnvironmentValue("workspace", mdbPath);
                 gp.Execute(createFileGDBTool, null);
                 gdbPath = Path.Combine(dirName, gdbName);
-                IGpEnumList lfc = gp.ListFeatureClasses("", "", "");
-                string fc;
-                while ((fc = lfc.Next()) != "")
-                {
-                    message.AddMessage("Copying " + fc + " to " + gdbName);
-                    gp.Execute(CopyTool(fc, $"{gdbPath}\\{fc}"), null);
-                    message.AddMessage("Copy " + fc + " to " + gdbName);
-                }
-                IGpEnumList lds = gp.ListDatasets("", "");
-                string ds;
-                while ((ds = lds.Next()) != "")
-                {
-                    message.AddMessage("Copying " + ds + " to " + gdbName);
-                    gp.Execute(CopyTool(ds, $"{gdbPath}\\{ds}", "FeatureDataset"), null);
-                    message.AddMessage("Copy " + ds + " to " + gdbName);
-                }
-                IGpEnumList ltbl = gp.ListTables("", "");
-                string tbl;
-                while ((tbl = ltbl.Next()) != "")
-                {
-                    message.AddMessage("Copying " + tbl + " to " + gdbName);
-                    gp.Execute(CopyTool(tbl, $"{gdbPath}\\{tbl}"), null);
-                    message.AddMessage("Copy " + tbl + " to " + gdbName);
-                }
+                list = gp.ListFeatureClasses("", "", "");
+                ExecuteCopyTool(gp, list, message, gdbName, gdbPath);
+                list = gp.ListDatasets("", "");
+                ExecuteCopyTool(gp, list, message, gdbName, gdbPath, "FeatureDataset");
+                list = gp.ListTables("", "");
+                ExecuteCopyTool(gp, list, message, gdbName, gdbPath);
+                message.AddMessage("Dönüştürme işlemi başarıyla sonuçlandı.");
             }
             catch (Exception e)
             {
-                message.AddError(e.HResult, e.Message.Trim() + "\r\n\r\n" + e.StackTrace.Trim());
-                gdbPath = "";
+                string errPath = Path.Combine(Assembly.GetExecutingAssembly().Location, "MdbToGdb Error.txt");
+                message.AddError(0, "Hata oluştu. Ayrıntılı hata mesajı için. " + errPath);
+                string err = $"Error: {DateTime.Now} MdbPath: {mdbPath}\r\n{e.Message}\r\n{e.StackTrace}\r\n\r\n";
+                if (File.Exists(errPath))
+                    err = File.ReadAllText(errPath, Encoding.UTF8) + err;
+                File.WriteAllText(errPath, err, Encoding.UTF8);
             }
             finally
             {
-                ReleaseObjects();
+                ReleaseObjects(createFileGDBTool, gp, list);
             }
             return gdbPath;
         }
@@ -64,7 +56,19 @@ namespace MdbToGdb
         protected void ReleaseObjects(params object[] objects)
         {
             foreach (var o in objects)
-                Marshal.ReleaseComObject(o);
+                if (o != null)
+                    Marshal.ReleaseComObject(o);
+        }
+
+        protected void ExecuteCopyTool(ESRI.ArcGIS.Geoprocessor.Geoprocessor gp, IGpEnumList list, IGPMessages message, string gdbName, string gdbPath, string dataType = null)
+        {
+            string data;
+            while ((data = list.Next()) != "")
+            {
+                message.AddMessage($"Copying {data} to {gdbName}");
+                gp.Execute(CopyTool(data, $"{gdbPath}\\{data}", dataType), null);
+                message.AddMessage($"Copy {data} to {gdbName}");
+            }
         }
 
         protected Copy CopyTool(string inData, string outData, string dataType = null) => new Copy { in_data = inData, out_data = outData, data_type = dataType };

@@ -1,129 +1,72 @@
 ﻿using ESRI.ArcGIS;
-using ESRI.ArcGIS.ConversionTools;
 using ESRI.ArcGIS.DataManagementTools;
-using ESRI.ArcGIS.DataSourcesGDB;
-using ESRI.ArcGIS.esriSystem;
 using ESRI.ArcGIS.Geodatabase;
+using ESRI.ArcGIS.Geoprocessing;
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace MdbToGdb
 {
     public class MdbToGdb
     {
-        public static MdbToGdb instance = new MdbToGdb();
-
-        public void Convert(string parentDirectory, string mdbFileName)
+        public string Convert(string mdbPath, IGPMessages message)
         {
-            if (!RuntimeManager.Bind(ProductCode.EngineOrDesktop))
-                Console.WriteLine("");
-            IAoInitialize licenseInitializer = new AoInitializeClass();
-            if (licenseInitializer.Initialize(esriLicenseProductCode.esriLicenseProductCodeStandard) != esriLicenseStatus.esriLicenseCheckedOut)
-                Console.WriteLine("");
-            ESRI.ArcGIS.Geoprocessor.Geoprocessor gp = new ESRI.ArcGIS.Geoprocessor.Geoprocessor();
-            IWorkspaceFactory workspaceFactoryTarget = new FileGDBWorkspaceFactory();
-            IWorkspaceName targetWorkspaceName = workspaceFactoryTarget.Create(parentDirectory, mdbFileName, null, 0);
-            IName targetWorkspaceNameName = (IName)targetWorkspaceName;
-            IWorkspace targetWorkspace = (IWorkspace)targetWorkspaceNameName.Open();
-            IWorkspaceFactory sourceWorkspaceFactory = new AccessWorkspaceFactory();
-            IPropertySet sourcePropertySet = new PropertySetClass();
-            sourcePropertySet.SetProperty("DATABASE", Path.Combine(parentDirectory, mdbFileName));
-            IWorkspace sourceWorkspace = sourceWorkspaceFactory.Open(sourcePropertySet, 0);
-            IEnumDatasetName sourceEnumDatasetName = sourceWorkspace.get_DatasetNames(esriDatasetType.esriDTAny);
-            IDatasetName sourceDatasetName;
-            while ((sourceDatasetName = sourceEnumDatasetName.Next()) != null)
+            string gdbPath = "";
+            try
             {
-                IDatasetName sourceDatasetNameDatasetName = sourceDatasetName;
-                switch (sourceDatasetNameDatasetName.Type)
+                RuntimeManager.Bind(ProductCode.EngineOrDesktop);
+                string gdbName = Path.GetFileNameWithoutExtension(mdbPath) + ".gdb";
+                string dirName = Path.GetDirectoryName(mdbPath);
+                CreateFileGDB createFileGDBTool = new CreateFileGDB(dirName, gdbName);
+                ESRI.ArcGIS.Geoprocessor.Geoprocessor gp = new ESRI.ArcGIS.Geoprocessor.Geoprocessor();
+                gp.OverwriteOutput = true;
+                gp.SetEnvironmentValue("workspace", mdbPath);
+                gp.Execute(createFileGDBTool, null);
+                gdbPath = Path.Combine(dirName, gdbName);
+                IGpEnumList lfc = gp.ListFeatureClasses("", "", "");
+                string fc;
+                while ((fc = lfc.Next()) != "")
                 {
-                    case esriDatasetType.esriDTFeatureDataset:
-                        {
-                            IFeatureDataset featureDataset = (IFeatureDataset)((IName)sourceDatasetName).Open();
-                            IGeoDataset geoDataset = (IGeoDataset)featureDataset;
-                            CreateFeatureDataset cfd = new CreateFeatureDataset
-                            {
-                                spatial_reference = geoDataset.SpatialReference,
-                                out_dataset_path = targetWorkspace,
-                                out_name = sourceDatasetName.Name
-                            };
-                            gp.Execute(cfd, null);
-                            IEnumDatasetName targetEnumDatasetName = targetWorkspace.get_DatasetNames(esriDatasetType.esriDTAny);
-                            IDatasetName targetDatasetName;
-                            while ((targetDatasetName = targetEnumDatasetName.Next()) != null)
-                            {
-                                if (targetDatasetName.Name.Equals(sourceDatasetName.Name))
-                                    break;
-                            }
-                            IEnumDatasetName sourceSubEnumDataSetName = sourceDatasetNameDatasetName.SubsetNames;
-                            IDatasetName sourceSubDatasetName;
-                            while ((sourceSubDatasetName = sourceSubEnumDataSetName.Next()) != null)
-                            {
-                                switch (sourceSubDatasetName.Type)
-                                {
-                                    case esriDatasetType.esriDTFeatureClass:
-                                        {
-                                            IName sourceSubDatasetNameDatasetNameName = (IName)sourceSubDatasetName;
-                                            IFeatureClass sourceObjectClass = (IFeatureClass)sourceSubDatasetNameDatasetNameName.Open();
-                                            FeatureClassToFeatureClass fcfc = new FeatureClassToFeatureClass
-                                            {
-                                                in_features = sourceObjectClass,
-                                                out_path = targetWorkspace,
-                                                out_name = sourceSubDatasetName.Name
-                                            };
-                                            gp.Execute(fcfc, null);
-                                        }
-                                        break;
-                                    case esriDatasetType.esriDTTable:
-                                        {
-                                            IName sourceDatasetNameDatasetNameName = (IName)sourceDatasetNameDatasetName;
-                                            ITable sourceObjectClass = (ITable)sourceDatasetNameDatasetNameName.Open();
-                                            TableToTable ttt = new TableToTable
-                                            {
-                                                in_rows = sourceObjectClass,
-                                                out_path = targetWorkspace,
-                                                out_name = sourceSubDatasetName.Name
-                                            };
-                                            gp.Execute(ttt, null);
-                                        }
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
-                        }
-                        break;
-                    case esriDatasetType.esriDTFeatureClass:
-                        {
-                            IName sourceDatasetNameDatasetNameName = (IName)sourceDatasetNameDatasetName;
-                            IFeatureClass sourceObjectClass = (IFeatureClass)sourceDatasetNameDatasetNameName.Open();
-                            FeatureClassToFeatureClass fcfc = new FeatureClassToFeatureClass
-                            {
-                                in_features = sourceObjectClass,
-                                out_path = targetWorkspace,
-                                out_name = sourceDatasetName.Name
-                            };
-                            gp.Execute(fcfc, null);
-                        }
-                        break;
-                    case esriDatasetType.esriDTTable:
-                        {
-                            IName sourceDatasetNameDatasetNameName = (IName)sourceDatasetNameDatasetName;
-                            ITable sourceObjectClass = (ITable)sourceDatasetNameDatasetNameName.Open();
-                            TableToTable ttt = new TableToTable
-                            {
-                                in_rows = sourceObjectClass,
-                                out_path = targetWorkspace,
-                                out_name = sourceDatasetName.Name
-                            };
-                            gp.Execute(ttt, null);
-                        }
-                        break;
-                    default:
-                        break;
+                    message.AddMessage("Copying " + fc + " to " + gdbName);
+                    gp.Execute(CopyTool(fc, $"{gdbPath}\\{fc}"), null);
+                    message.AddMessage("Copy " + fc + " to " + gdbName);
                 }
-                string sourceName = sourceDatasetName.Name;
-                Console.WriteLine(sourceName);
+                IGpEnumList lds = gp.ListDatasets("", "");
+                string ds;
+                while ((ds = lds.Next()) != "")
+                {
+                    message.AddMessage("Copying " + ds + " to " + gdbName);
+                    gp.Execute(CopyTool(ds, $"{gdbPath}\\{ds}", "FeatureDataset"), null);
+                    message.AddMessage("Copy " + ds + " to " + gdbName);
+                }
+                IGpEnumList ltbl = gp.ListTables("", "");
+                string tbl;
+                while ((tbl = ltbl.Next()) != "")
+                {
+                    message.AddMessage("Copying " + tbl + " to " + gdbName);
+                    gp.Execute(CopyTool(tbl, $"{gdbPath}\\{tbl}"), null);
+                    message.AddMessage("Copy " + tbl + " to " + gdbName);
+                }
             }
+            catch (Exception e)
+            {
+                message.AddError(e.HResult, e.Message.Trim() + "\r\n\r\n" + e.StackTrace.Trim());
+                gdbPath = "";
+            }
+            finally
+            {
+                ReleaseObjects();
+            }
+            return gdbPath;
         }
+
+        protected void ReleaseObjects(params object[] objects)
+        {
+            foreach (var o in objects)
+                Marshal.ReleaseComObject(o);
+        }
+
+        protected Copy CopyTool(string inData, string outData, string dataType = null) => new Copy { in_data = inData, out_data = outData, data_type = dataType };
     }
 }
